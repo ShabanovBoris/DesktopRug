@@ -1,5 +1,6 @@
 {
-  "status": "prepared_not_published",
+  "status": "github_published_reddit_submitted_filtered_other_channels_prepared",
+  "website_url": "https://shabanovboris.github.io/DesktopRug/",
   "release_basis": "v1.1.0",
   "footage_release": "v1.0.1",
   "repository_url": "https://github.com/ShabanovBoris/DesktopRug",
@@ -22,11 +23,16 @@
     }
   ],
   "reddit_sideproject": {
+    "status": "submitted_filtered_awaiting_moderator_review",
+    "published_url": "https://www.reddit.com/r/SideProject/comments/1x3ex6i/i_made_desktop_cleanup_work_like_real_life_hide/",
+    "author": "u/Exact-Cherry-87",
+    "submitted_on": "2026-10-11",
+    "moderator_review_requested": true,
     "title": "I made desktop cleanup work like real life: hide the mess under a rug",
     "body": "I'm the developer of Desktop Rug, a free, open-source macOS app.\n\nThe cleanup strategy is very familiar: put a rug over the mess and deal with it later. Screenshots, ZIPs, all those files on your desktop — out of sight. Lift a corner and they're still there. The attached clip shows the actual app covering icons and revealing them again.\n\nIt's a visual cleanup: your files stay in their original Finder positions. Drag the middle to move the rug, pull a corner to lift and fold the cloth, or Option-drag to grab any point. Right-click reveals the icons for normal use; locking the rug lets clicks pass through.\n\nThe surprisingly serious part is the fabric: XPBD cloth simulation, self-collision, and Metal rendering. Four patterns are included. Physics and drawing pause when the cloth settles.\n\nOptional Finder integration reads icon positions with Automation permission. It never moves, edits, or deletes files. No account or telemetry.\n\nFree under the MIT license. Requires macOS 14+ and Apple Silicon. The binary is ad-hoc signed and isn't notarized; the README explains first launch and building from source.\n\nSource, real demo, and download: https://github.com/ShabanovBoris/DesktopRug\n\nWhat would be hiding under your desktop rug?",
     "media": "site/assets/demo.mp4",
     "submission_url": "https://www.reddit.com/r/SideProject/submit",
-    "note": "Read the live community rules and choose an applicable flair before publishing."
+    "note": "Submitted once with the attached video and body. The live form has no available flair; no additional community rules were displayed. Reddit's filters removed the post. A separately authorized modmail was sent; moderator review is pending. Do not duplicate or repost to bypass the filter."
   },
   "reddit_macapps_megathread": {
     "body": "Developer here: **Desktop Rug** is a free, MIT-licensed desktop toy for macOS.\n\n**Purpose:** hide desktop clutter under a rug, just like the familiar real-life cleanup trick. Drag it over the icons, lift a corner, and find the mess still underneath. This is a visual cleanup; files stay in their original Finder positions.\n\n**Compared with ordinary wallpaper:** the cloth moves, bends, folds, and drapes over icon-shaped collision mounds. Right-click reveals and lets you use the original icons; Lock Rug passes clicks through. Four patterns are included.\n\n**Price:** free, with source and a downloadable binary.\n\n**Privacy:** local only, no telemetry or account. Finder integration is optional and reads icon positions with Automation permission. Files aren't moved, edited, or deleted.\n\n**Compatibility:** macOS 14+ and Apple Silicon. The release is ad-hoc signed and not notarized. Automatic Finder collisions are intended for the main display; some Stacks/arrangement modes can limit icon data.\n\nSource, real demo, first-launch instructions, and download: https://github.com/ShabanovBoris/DesktopRug",
