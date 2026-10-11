@@ -1,10 +1,21 @@
 # Desktop Rug
 
-A native macOS desktop rug with interactive cloth physics, woven patterns, and Metal rendering. Lift a corner, fold the fabric, or let it drape over your Finder icons.
+**Sweep your desktop clutter under the rug.**
 
-[Download](https://github.com/ShabanovBoris/DesktopRug/releases/latest) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
+A free, native macOS rug for hiding desktop clutter the way you do it in real life. Drag it over the mess, then lift a corner: your files are still there. Interactive cloth physics, woven patterns, and Metal rendering. This is a visual cleanup; files stay in their original Finder positions.
+
+[Download for Mac](https://github.com/ShabanovBoris/DesktopRug/releases/latest) · [Installation](#install) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
+
+[![Moving a rug over desktop clutter on a real Mac; the files stay underneath](site/assets/demo.gif)](https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb)
+
+The released binary requires **macOS 14+ and Apple Silicon**. It is ad-hoc signed and not notarized; [first-launch instructions](#install) are below.
+
+<details>
+<summary>Watch the full desktop recording (49 seconds)</summary>
 
 https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb
+
+</details>
 
 ## Features
 

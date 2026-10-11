@@ -1,0 +1,25 @@
+{
+  "repository": "ShabanovBoris/DesktopRug",
+  "observed_at": "2026-10-11 17:10:10 UTC",
+  "stars": 0,
+  "forks": 0,
+  "watchers": 0,
+  "archive_downloads": 0,
+  "archives": [
+    {
+      "release": "v1.0.1",
+      "asset": "DesktopRug-v1.0.1-macOS-arm64.zip",
+      "downloads": 0
+    },
+    {
+      "release": "v1.0.0",
+      "asset": "DesktopRug-v1.0.0-macOS-arm64.zip",
+      "downloads": 0
+    }
+  ],
+  "sources": [
+    "https://api.github.com/repos/ShabanovBoris/DesktopRug",
+    "https://api.github.com/repos/ShabanovBoris/DesktopRug/releases"
+  ],
+  "note": "Public release ZIP downloads, including repeat downloads; not unique users or installations."
+}

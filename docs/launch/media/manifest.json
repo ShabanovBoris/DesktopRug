@@ -1,0 +1,69 @@
+{
+  "source_url": "https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb",
+  "source_sha256": "089926595c878d868e1fbd32c98b268ce7d0f6a71b54f169811fa489fd9ff2a0",
+  "source_release": "v1.0.1",
+  "note": "Real app footage. Vertical, gallery, and social exports add captions and framing.",
+  "outputs": [
+    {
+      "path": "site/assets/demo.mp4",
+      "source_start_seconds": 0,
+      "duration_seconds": 18,
+      "bytes": 3209668,
+      "sha256": "47c33c0c6156921ba079bd3ac198507ad190b49e480d0f618b9f782a96df2b78"
+    },
+    {
+      "path": "site/assets/poster.jpg",
+      "source_start_seconds": 16,
+      "duration_seconds": null,
+      "bytes": 60290,
+      "sha256": "5dfc6b486f3005a761df17c2fc21971bf60b801922fc16dfa135fbff57100435"
+    },
+    {
+      "path": "site/assets/demo.gif",
+      "source_start_seconds": 0,
+      "duration_seconds": 6,
+      "bytes": 3408701,
+      "sha256": "64c58e3a2c184a1c67ac80527d1a1e59356d634112d87d101217c8095281e087"
+    },
+    {
+      "path": "docs/launch/media/vertical.mp4",
+      "source_start_seconds": 0,
+      "duration_seconds": 18,
+      "bytes": 2410558,
+      "sha256": "83f867b06d77d7a1e90ee6c86b7bbb0fb5f19851fc9aec06c172f51523797368"
+    },
+    {
+      "path": "docs/launch/media/product-hunt-01.png",
+      "source_start_seconds": 0,
+      "duration_seconds": null,
+      "bytes": 521234,
+      "sha256": "1c868616f6a78dee616b31ba0971825f076a80fdbd53807d466fe71cbe81d1d8"
+    },
+    {
+      "path": "docs/launch/media/product-hunt-02.png",
+      "source_start_seconds": 6,
+      "duration_seconds": null,
+      "bytes": 476592,
+      "sha256": "a8e2b8a98b050c7570ce310d7607ef8b4a4712f156314d336d4785795588674f"
+    },
+    {
+      "path": "docs/launch/media/product-hunt-03.png",
+      "source_start_seconds": 16,
+      "duration_seconds": null,
+      "bytes": 348471,
+      "sha256": "b6d46626e2a7cbb214780e0efe848ec1fb5c159a1a8898984ffddcc8ebd0f436"
+    },
+    {
+      "path": "site/assets/social-card.png",
+      "source_start_seconds": 16,
+      "duration_seconds": null,
+      "bytes": 186200,
+      "sha256": "67d8ee2c3a52b5e70b82e67a028b7a4c9e02d329e6a079102ffe6dfcdc87fa38"
+    },
+    {
+      "path": "docs/launch/media/thumbnail.png",
+      "bytes": 88687,
+      "sha256": "f74ecf7edb23b912a7d0ec9d21dca77b365ff26c7401178170b70288502f5c9f"
+    }
+  ]
+}
