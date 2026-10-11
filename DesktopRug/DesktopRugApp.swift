@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import ServiceManagement
+import simd
 
 @main @MainActor enum DesktopRugApp {
     static func main() {
@@ -59,8 +60,8 @@ import ServiceManagement
         do {
             let desktop=try DesktopWindowController(configuration:settings.configuration,screen:screen,diagnostic:diagnostic)
             self.desktop=desktop
-            desktop.interaction.didMove={ [weak self] origin in self?.settings.update { $0.originX=origin.x;$0.originY=origin.y } }
-            desktop.interaction.didTranslate={ [weak self] in self?.updateCollisions() }
+            desktop.interaction.didFinishTransform={ [weak self] origin,angle in self?.savePose(origin:origin,rotationDegrees:angle) }
+            desktop.interaction.didTransform={ [weak self] in self?.updateCollisions() }
             desktop.interaction.addMound={ [weak self] point in self?.addManualMound(at:point) }
             desktop.interaction.reveal={ [weak self] in self?.revealItems() }
             desktop.onDisplaysChanged={ [weak self] in self?.displaysChanged() }
@@ -113,7 +114,7 @@ import ServiceManagement
     private func createMenu() {
         let item=NSStatusBar.system.statusItem(withLength:NSStatusItem.squareLength)
         item.button?.image=NSImage(systemSymbolName:"rectangle.portrait.bottomhalf.inset.filled",accessibilityDescription:"Desktop Rug")
-        item.button?.toolTip="Desktop Rug — drag the fabric, lift a corner, right-click to reveal"
+        item.button?.toolTip="Desktop Rug — drag to move, Command-drag to rotate, lift a corner, right-click to reveal"
         let menu=NSMenu();menu.delegate=self
         let title=NSMenuItem(title:"DESKTOP RUG",action:nil,keyEquivalent:"");title.isEnabled=false;menu.addItem(title)
         visibilityItem=add("Hide Rug",#selector(toggleVisible),to:menu)
@@ -123,6 +124,11 @@ import ServiceManagement
         menu.addItem(.separator())
         let sizes=NSMenu();for (i,title) in ["Small · 480 × 320","Medium · 640 × 430","Large · 900 × 600"].enumerated() { let choice=add(title,#selector(changeSize(_:)),to:sizes);choice.tag=i }
         let sizeItem=NSMenuItem(title:"Rug Size",action:nil,keyEquivalent:"");sizeItem.submenu=sizes;menu.addItem(sizeItem)
+        let rotation=NSMenu()
+        add("Rotate Left 15°",#selector(rotateLeft),to:rotation)
+        add("Rotate Right 15°",#selector(rotateRight),to:rotation)
+        add("Reset Rotation",#selector(resetRotation),to:rotation)
+        let rotationItem=NSMenuItem(title:"Rug Rotation",action:nil,keyEquivalent:"");rotationItem.submenu=rotation;menu.addItem(rotationItem)
         let qualities=NSMenu();for (i,quality) in PhysicsQuality.allCases.enumerated() { let choice=add(quality.title,#selector(changeQuality(_:)),to:qualities);choice.tag=i }
         let qualityItem=NSMenuItem(title:"Physics Quality",action:nil,keyEquivalent:"");qualityItem.submenu=qualities;menu.addItem(qualityItem)
         loginItem=add("Start at Login",#selector(toggleLogin),to:menu)
@@ -174,6 +180,22 @@ import ServiceManagement
         let size=sizes[item.tag];settings.update { $0.width=size.x;$0.height=size.y }
     }
     @objc private func changeQuality(_ item:NSMenuItem) { settings.update { $0.quality=PhysicsQuality.allCases[item.tag] } }
+    private func savePose(origin:SIMD2<Float>,rotationDegrees:Float) {
+        guard let desktop else { return }
+        settings.update {
+            $0.originX=origin.x;$0.originY=origin.y
+            $0.rotationDegrees=ClothGeometry.normalizedDegrees(rotationDegrees)
+            let placed=DesktopWindowController.validOrigin($0,screen:desktop.screen)
+            $0.originX=placed.x;$0.originY=placed.y
+        }
+    }
+    func setRotation(_ degrees:Float) {
+        guard let sim=desktop?.renderer.simulation else { return }
+        savePose(origin:sim.origin,rotationDegrees:degrees)
+    }
+    @objc func rotateLeft() { setRotation(settings.configuration.rotationDegrees+15) }
+    @objc func rotateRight() { setRotation(settings.configuration.rotationDegrees-15) }
+    @objc func resetRotation() { setRotation(0) }
     @objc func toggleLogin() { setStartAtLogin(SMAppService.mainApp.status != .enabled) }
     func setStartAtLogin(_ enabled:Bool) {
         do {
@@ -265,7 +287,8 @@ import ServiceManagement
             mounds += finderItems.filter { $0.finderPosition.x>0 && $0.finderPosition.x<width && $0.finderPosition.y>0 && $0.finderPosition.y<Float(main.frame.height) }.map { $0.collision(mainDisplayHeight:height) }
         }
         let sim=desktop.renderer.simulation
-        let lower=sim.origin-SIMD2(repeating:180),upper=sim.origin+sim.size+SIMD2(repeating:180)
+        let bounds=sim.planarBounds
+        let lower=bounds.lower-SIMD2(repeating:180),upper=bounds.upper+SIMD2(repeating:180)
         mounds=mounds.filter { $0.center.x+$0.halfExtent.x>lower.x && $0.center.x-$0.halfExtent.x<upper.x && $0.center.y+$0.halfExtent.y>lower.y && $0.center.y-$0.halfExtent.y<upper.y }
         desktop.setCollisions(mounds)
     }
@@ -301,6 +324,8 @@ import ServiceManagement
         data["finderItemCount"]=finderItems.count
         data["selfContacts"]=sim.selfContactCount
         data["edgeSelfContacts"]=sim.edgeSelfContactCount
+        data["rotationDrags"]=desktop.interaction.rotationDragCount
+        data["rotationDegrees"]=sim.rotationDegrees
         data["windowLevel"]=desktop.window.level.rawValue
         if let configuration=try? JSONEncoder().encode(settings.configuration) {
             data["configuration"]=try? JSONSerialization.jsonObject(with:configuration)
@@ -373,6 +398,7 @@ import ServiceManagement
             settings.update { $0=prior }
             report["textureChecks"]=textureResults
             report["allTexturesRenderedFlatAndFolded"]=true
+            report["rotationChecks"]=try validateRotation(to:directory)
             settings.update { $0.isVisible=true;$0.isLocked=false }
             report["showRug"]=desktop.window.isVisible
             revealItems()
@@ -398,6 +424,85 @@ import ServiceManagement
         } catch { report["error"]=error.localizedDescription;report["success"]=false }
         if let json=try? JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]) { try? json.write(to:directory.appendingPathComponent("native-ui-validation.json")) }
         if !CommandLine.arguments.contains("--connect-finder") { NSApp.terminate(nil) }
+    }
+
+    private func validateRotation(to directory:URL) throws -> [String:Any] {
+        guard let desktop else { throw RugRendererError.unavailable("No desktop window for rotation validation.") }
+        let prior=settings.configuration
+        defer { settings.update { $0=prior } }
+        let defaults=UserDefaults(suiteName:"dev.desktoprug.validation")!
+        settings.update {
+            $0.width=900;$0.height=250;$0.quality = .balanced;$0.rotationDegrees=0
+            $0.originX=nil;$0.originY=nil;$0.manualMounds=[];$0.isVisible=true;$0.isLocked=false
+        }
+        setRotation(90)
+        let upright=desktop.renderer.simulation
+        let target=upright.center+SIMD2<Float>(0,375)
+        settings.update { $0.manualMounds=[ManualMound(x:target.x,y:target.y,width:130,depth:120,height:40)] }
+        guard upright.collisions.mounds.count==1,upright.collisions.mounds[0].center==target else {
+            throw RugRendererError.unavailable("The rotated footprint missed a stationary desktop collision.")
+        }
+        for _ in 0..<720 { upright.step() }
+        let height=upright.positions.map(\.z).max() ?? 0
+        guard height>30 else { throw RugRendererError.unavailable("The rotated cloth did not rise over its collision object.") }
+        try desktop.renderer.capture(to:directory.appendingPathComponent("rotation-icon-collision.png"))
+        settings.update { $0.manualMounds=[] }
+        desktop.reset()
+        let center=upright.center
+        setRotation(45)
+        guard simd_distance(upright.center,center)<0.01 else { throw RugRendererError.unavailable("Rotation moved the center of an unclipped rug.") }
+        try desktop.renderer.capture(to:directory.appendingPathComponent("rotation-45-flat.png"))
+        rotateLeft();rotateRight()
+        guard upright.rotationDegrees==45,statusItem?.menu?.item(withTitle:"Rug Rotation")?.submenu?.items.count==3 else {
+            throw RugRendererError.unavailable("The rotation menu did not preserve the requested angle.")
+        }
+        setRotation(60)
+        let pointer=ClothGeometry.project(upright.positions[upright.positions.count/2])
+        func event(_ type:NSEvent.EventType,at point:SIMD2<Float>) throws -> NSEvent {
+            let location=desktop.window.convertPoint(fromScreen:NSPoint(x:CGFloat(point.x),y:CGFloat(point.y)))
+            guard let event=NSEvent.mouseEvent(with:type,location:location,modifierFlags:.command,timestamp:ProcessInfo.processInfo.systemUptime,windowNumber:desktop.window.windowNumber,context:nil,eventNumber:1,clickCount:1,pressure:1) else {
+                throw RugRendererError.unavailable("Could not construct an app-local rotation input event.")
+            }
+            return event
+        }
+        let count=desktop.interaction.rotationDragCount
+        // These events exercise our own handlers; no desktop mouse events or Finder actions are synthesized.
+        desktop.interaction.mouseDown(try event(.leftMouseDown,at:pointer))
+        desktop.interaction.mouseDragged(try event(.leftMouseDragged,at:pointer+SIMD2(80,0)))
+        desktop.interaction.mouseUp(try event(.leftMouseUp,at:pointer+SIMD2(80,0)))
+        guard desktop.interaction.rotationDragCount==count+1,abs(upright.rotationDegrees-28)<0.01,
+              abs(settings.configuration.rotationDegrees-28)<0.01,upright.grabbedIndex==nil else {
+            throw RugRendererError.unavailable("Command-drag did not rotate and persist the rug pose.")
+        }
+        guard SettingsStore(defaults:defaults).configuration==settings.configuration else {
+            throw RugRendererError.unavailable("The saved rotation did not round-trip.")
+        }
+        try desktop.renderer.capture(to:directory.appendingPathComponent("rotation-command-drag.png"))
+        settings.update { $0.isLocked=true }
+        desktop.interaction.mouseDown(try event(.leftMouseDown,at:pointer))
+        guard desktop.interaction.rotationDragCount==count+1,desktop.interaction.drag==nil else {
+            throw RugRendererError.unavailable("A locked rug accepted a rotation gesture.")
+        }
+        settings.update { $0.isLocked=false;$0.quality = .efficient;$0.width=480;$0.height=320 }
+        let rebuilt=desktop.renderer.simulation
+        guard abs(rebuilt.rotationDegrees-28)<0.01,rebuilt.columns==PhysicsQuality.efficient.columns else {
+            throw RugRendererError.unavailable("Changing size or quality lost the saved rotation.")
+        }
+        desktop.reset()
+        guard abs(rebuilt.rotationDegrees-28)<0.01 else { throw RugRendererError.unavailable("Relax Fabric lost the angle.") }
+        let corner=rebuilt.cornerIndices.last!
+        let inward=ClothGeometry.rotationMatrix(degrees:rebuilt.rotationDegrees)*SIMD2<Float>(-140,-90)
+        rebuilt.grab(index:corner);rebuilt.moveGrab(to:rebuilt.positions[corner]+SIMD3(inward.x,inward.y,150))
+        for _ in 0..<180 { rebuilt.step() }
+        rebuilt.releaseGrab()
+        setRotation(-45)
+        try desktop.renderer.capture(to:directory.appendingPathComponent("rotation-folded.png"))
+        resetRotation()
+        guard rebuilt.rotationDegrees==0 else { throw RugRendererError.unavailable("Reset Rotation did not return to zero degrees.") }
+        return ["commandDragHandler":true,"rotationMenu":true,"centerPreserved":true,"savedAngleRoundTrip":true,
+                "lockedRugIgnoresRotation":true,"sizeAndQualityPreserveAngle":true,"relaxPreservesAngle":true,
+                "resetRotation":true,"rotatedCollisionCulling":true,"collisionMaxHeight":height,
+                "collisionMode":"explicit manual test mound","inputMode":"app-local NSEvents; no global input synthesis"]
     }
 
     private func validate(to directory:URL) async {

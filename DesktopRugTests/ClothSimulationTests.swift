@@ -125,16 +125,103 @@ final class ClothSimulationTests: XCTestCase {
         XCTAssertEqual(ClothGeometry.finderPoint(x: 200, y: 90, mainDisplayHeight: 1117), SIMD2(200, 1027))
     }
 
+    func testRotationPreservesFoldHeightsMaterialAndGrabbedCorner() {
+        let sim = cloth(), corner = sim.cornerIndices.last!
+        sim.grab(index: corner)
+        sim.moveGrab(to: SIMD3(420, 290, 110))
+        for _ in 0..<120 { sim.step() }
+        let before = sim.positions, uvs = sim.uvs, origin = sim.origin, stretch = sim.maximumStretchRatio()
+        sim.setRotation(degrees: 90)
+        XCTAssertEqual(sim.origin, origin)
+        XCTAssertEqual(sim.uvs, uvs)
+        XCTAssertEqual(sim.grabbedIndex, corner)
+        XCTAssertEqual(sim.maximumStretchRatio(), stretch, accuracy: 0.0001)
+        for (old, rotated) in zip(before, sim.positions) {
+            XCTAssertEqual(rotated.x, sim.center.x - (old.y - sim.center.y), accuracy: 0.001)
+            XCTAssertEqual(rotated.y, sim.center.y + (old.x - sim.center.x), accuracy: 0.001)
+            XCTAssertEqual(rotated.z, old.z)
+        }
+        for _ in 0..<30 { sim.step() }
+        XCTAssertEqual(sim.positions[corner].x, 110, accuracy: 0.01)
+        XCTAssertEqual(sim.positions[corner].y, 340, accuracy: 0.01)
+        XCTAssertGreaterThan(sim.positions[corner].z, 100)
+        XCTAssertEqual(sim.recoveryCount, 0)
+    }
+
+    func testRotatingSettledClothDoesNotInjectVelocity() {
+        let sim = cloth()
+        for _ in 0..<200 { sim.step() }
+        XCTAssertTrue(sim.isSettled)
+        sim.setRotation(degrees: 405)
+        XCTAssertEqual(sim.rotationDegrees, 45)
+        XCTAssertFalse(sim.isSettled)
+        sim.step()
+        XCTAssertLessThan(sim.maximumStepDisplacement, 0.01)
+        let positions = sim.positions
+        sim.setRotation(degrees: .nan)
+        XCTAssertEqual(sim.rotationDegrees, 45)
+        XCTAssertEqual(sim.positions, positions)
+        XCTAssertEqual(sim.recoveryCount, 0)
+    }
+
+    func testResetAndRebuildKeepRotatedOrientationAndHitTesting() {
+        let sim = ClothSimulation(columns: 25, rows: 19, size: SIMD2(480, 320), origin: .zero, rotationDegrees: 270)
+        XCTAssertEqual(sim.rotationDegrees, -90)
+        sim.grab(index: 0)
+        sim.moveGrab(to: SIMD3(110, 340, 100))
+        for _ in 0..<120 { sim.step() }
+        sim.reset()
+        XCTAssertEqual(sim.rotationDegrees, -90)
+        XCTAssertEqual(sim.positions[0].x, 80, accuracy: 0.001)
+        XCTAssertEqual(sim.positions[0].y, 400, accuracy: 0.001)
+        XCTAssertEqual(sim.planarBounds.lower.x, 80, accuracy: 0.001)
+        XCTAssertEqual(sim.planarBounds.upper.y, 400, accuracy: 0.001)
+        XCTAssertNotNil(ClothGeometry.hitVertex(at: SIMD2(240, 370), positions: sim.positions, indices: sim.indices))
+        XCTAssertNil(ClothGeometry.hitVertex(at: SIMD2(20, 160), positions: sim.positions, indices: sim.indices))
+        let rebuilt = ClothSimulation(columns: 29, rows: 21, size: sim.size, origin: sim.origin, rotationDegrees: sim.rotationDegrees)
+        XCTAssertEqual(rebuilt.positions[0].x, sim.positions[0].x, accuracy: 0.001)
+        XCTAssertEqual(rebuilt.positions[0].y, sim.positions[0].y, accuracy: 0.001)
+        let extent = ClothGeometry.rotatedHalfExtent(size: sim.size, degrees: 90)
+        XCTAssertEqual(extent.x, 160, accuracy: 0.001)
+        XCTAssertEqual(extent.y, 240, accuracy: 0.001)
+    }
+
+    func testRotatedClothCollidesWithStationaryDesktopObjects() {
+        let sim = ClothSimulation(columns: 41, rows: 15, size: SIMD2(900, 250), origin: SIMD2(200, 300), rotationDegrees: 90)
+        let mound = CollisionMound(center: SIMD2(650, 800), halfExtent: SIMD2(65, 60), height: 40)
+        sim.setCollisions([mound])
+        for _ in 0..<720 { sim.step() }
+        XCTAssertEqual(sim.collisions.mounds, [mound])
+        let nearest = sim.positions.min { simd_distance(SIMD2($0.x, $0.y), mound.center) < simd_distance(SIMD2($1.x, $1.y), mound.center) }!
+        XCTAssertGreaterThan(nearest.z, 30)
+        for p in sim.positions { XCTAssertGreaterThanOrEqual(p.z + 0.002, sim.collisions.sample(at: SIMD2(p.x, p.y)).height) }
+        XCTAssertLessThan(sim.maximumStretchRatio(), 1.12)
+        XCTAssertEqual(sim.recoveryCount, 0)
+    }
+
+    func testLegacyConfigurationLoadsWithZeroRotation() throws {
+        var original = RugConfiguration()
+        original.originX = 430; original.originY = 125; original.texture = .sovietFloral
+        original.finderEnabled = true; original.damping = 0.35
+        original.manualMounds = [ManualMound(x: 200, y: 300)]
+        var legacy = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(original)) as? [String: Any])
+        legacy.removeValue(forKey: "rotationDegrees")
+        let restored = try JSONDecoder().decode(RugConfiguration.self, from: JSONSerialization.data(withJSONObject: legacy))
+        XCTAssertEqual(restored, original)
+        XCTAssertEqual(restored.rotationDegrees, 0)
+    }
+
     func testConfigurationRoundTripAndInvalidValues() throws {
         var config = RugConfiguration()
-        config.originX = -90; config.originY = 1500; config.texture = .indigo
+        config.originX = -90; config.originY = 1500; config.texture = .indigo; config.rotationDegrees = -47.5
         config.manualMounds = [ManualMound(x: 400, y: 500)]
         let restored = try JSONDecoder().decode(RugConfiguration.self, from: JSONEncoder().encode(config))
         XCTAssertEqual(config, restored)
-        config.width = .nan; config.height = -1; config.damping = .infinity; config.frameRate = 999
+        config.width = .nan; config.height = -1; config.damping = .infinity; config.frameRate = 999; config.rotationDegrees = .nan
         config.sanitize()
         XCTAssertEqual(config.width, 640); XCTAssertEqual(config.height, 200)
         XCTAssertEqual(config.damping, 0.12); XCTAssertEqual(config.frameRate, 60)
+        XCTAssertEqual(config.rotationDegrees, 0)
     }
 
     func testVertexContactsTriangleInteriorEvenWhenVerticesAreFarApart() {

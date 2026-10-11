@@ -1,10 +1,21 @@
 # Desktop Rug
 
-A native macOS desktop rug with interactive cloth physics, woven patterns, and Metal rendering. Lift a corner, fold the fabric, or let it drape over your Finder icons.
+**Your Mac needs a rug.**
 
-[Download](https://github.com/ShabanovBoris/DesktopRug/releases/latest) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
+A free, native macOS desktop rug with interactive cloth physics, woven patterns, and Metal rendering. Lift a corner, fold the fabric, or let it drape over your Finder icons.
+
+[Download for Mac](https://github.com/ShabanovBoris/DesktopRug/releases/latest) · [Installation](#install) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
+
+[![Desktop Rug folding over sample Finder icons on a real macOS desktop](site/assets/demo.gif)](https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb)
+
+The released binary requires **macOS 14+ and Apple Silicon**. It is ad-hoc signed and not notarized; [first-launch instructions](#install) are below.
+
+<details>
+<summary>Watch the full desktop recording (49 seconds)</summary>
 
 https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb
+
+</details>
 
 ## Features
 
@@ -15,6 +26,7 @@ https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb
 - Optional Finder integration and manually placed collision mounds.
 - Menu bar controls, adjustable size and physics quality, 30/60/120 FPS, and Start at Login.
 - Saved settings and position. Physics and drawing pause when the fabric settles.
+- Rotation around the rug's center, saved with its position.
 
 Swift, AppKit, SwiftUI, and Metal. No third-party runtime dependencies.
 
@@ -29,7 +41,7 @@ Release binaries are **ad-hoc signed and not notarized**. macOS may block the fi
 Each release includes a `.sha256` file. In the download directory, verify the archive with:
 
 ```bash
-shasum -a 256 -c DesktopRug-v1.0.1-macOS-arm64.zip.sha256
+shasum -a 256 -c DesktopRug-v1.1.0-macOS-arm64.zip.sha256
 ```
 
 ## Controls
@@ -37,6 +49,7 @@ shasum -a 256 -c DesktopRug-v1.0.1-macOS-arm64.zip.sha256
 | Action | Result |
 |---|---|
 | Drag the middle | Move the entire rug |
+| Command-drag horizontally | Rotate the rug around its center |
 | Drag a corner | Lift and fold the fabric |
 | Option-drag | Grab any point on the cloth |
 | Shift-click | Add a manual collision mound |
@@ -44,8 +57,9 @@ shasum -a 256 -c DesktopRug-v1.0.1-macOS-arm64.zip.sha256
 | Lock Rug | Let mouse input pass through the rug |
 | Relax Fabric | Relax the mesh over its current objects |
 | Reset Rug Position | Center the rug on its selected display |
+| Rug Rotation menu | Rotate left/right by 15° or reset the angle |
 
-Open **Settings → Appearance** to choose a pattern. **Cloth & Motion** controls material and performance; **Desktop** controls the display, Finder connection, manual objects, and login item.
+Open **Settings → Appearance** to choose a pattern or set an exact angle in **Size & Rotation**. Rotation is preserved when you relax the fabric, change size or quality, or restart the app. Icons remain in their desktop positions. **Cloth & Motion** controls material and performance; **Desktop** controls the display, Finder connection, manual objects, and login item.
 
 ## Finder and privacy
 
@@ -88,7 +102,7 @@ bash scripts/test.sh
 python3 scripts/package_release.py
 ```
 
-The test suite contains 14 XCTest cases for geometry, collisions, self-contact, dragging, settling, stability, coordinate conversion, and settings serialization. GitHub Actions runs the tests, builds the app, checks project generation, verifies the signature and archive contents, and uploads a build artifact.
+The test suite contains 19 XCTest cases for geometry, collisions, self-contact, dragging, rotation, settling, stability, coordinate conversion, settings serialization, and loading older configurations. GitHub Actions runs the tests, builds the app, checks project generation, verifies the signature and archive contents, and uploads a build artifact.
 
 The packaging script verifies the built version, architecture, code signature, executable permission, and every extracted file. It writes a versioned ZIP and SHA-256 file under `build/release/`. Run `scripts/build.py` first.
 

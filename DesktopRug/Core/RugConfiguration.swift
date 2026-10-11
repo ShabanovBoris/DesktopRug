@@ -42,6 +42,7 @@ public struct RugConfiguration: Codable, Equatable, Sendable {
     public var height: Float = 430
     public var originX: Float?
     public var originY: Float?
+    public var rotationDegrees: Float = 0
     public var displayID: UInt32?
     public var texture: RugTexture = .heriz
     public var stiffness: Float = 0.88
@@ -59,6 +60,35 @@ public struct RugConfiguration: Codable, Equatable, Sendable {
 
     public init() {}
 
+    private enum CodingKeys: String, CodingKey {
+        case width, height, originX, originY, rotationDegrees, displayID, texture, stiffness, bending, damping, gravity
+        case quality, frameRate, highQualityShadows, debugCollisions, isVisible, isLocked, finderEnabled, manualMounds
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        width = try values.decode(Float.self, forKey: .width)
+        height = try values.decode(Float.self, forKey: .height)
+        originX = try values.decodeIfPresent(Float.self, forKey: .originX)
+        originY = try values.decodeIfPresent(Float.self, forKey: .originY)
+        // Configurations saved before rotation support retain every existing setting and start at zero degrees.
+        rotationDegrees = try values.decodeIfPresent(Float.self, forKey: .rotationDegrees) ?? 0
+        displayID = try values.decodeIfPresent(UInt32.self, forKey: .displayID)
+        texture = try values.decode(RugTexture.self, forKey: .texture)
+        stiffness = try values.decode(Float.self, forKey: .stiffness)
+        bending = try values.decode(Float.self, forKey: .bending)
+        damping = try values.decode(Float.self, forKey: .damping)
+        gravity = try values.decode(Float.self, forKey: .gravity)
+        quality = try values.decode(PhysicsQuality.self, forKey: .quality)
+        frameRate = try values.decode(Int.self, forKey: .frameRate)
+        highQualityShadows = try values.decode(Bool.self, forKey: .highQualityShadows)
+        debugCollisions = try values.decode(Bool.self, forKey: .debugCollisions)
+        isVisible = try values.decode(Bool.self, forKey: .isVisible)
+        isLocked = try values.decode(Bool.self, forKey: .isLocked)
+        finderEnabled = try values.decode(Bool.self, forKey: .finderEnabled)
+        manualMounds = try values.decode([ManualMound].self, forKey: .manualMounds)
+    }
+
     public mutating func sanitize() {
         width = width.isFinite ? min(max(width, 280), 1400) : 640
         height = height.isFinite ? min(max(height, 200), 950) : 430
@@ -68,6 +98,7 @@ public struct RugConfiguration: Codable, Equatable, Sendable {
         gravity = gravity.isFinite ? min(max(gravity, 100), 2000) : 980
         if let x = originX, !x.isFinite { originX = nil }
         if let y = originY, !y.isFinite { originY = nil }
+        rotationDegrees = ClothGeometry.normalizedDegrees(rotationDegrees)
         if ![30, 60, 120].contains(frameRate) { frameRate = 60 }
         manualMounds = Array(manualMounds.filter { $0.x.isFinite && $0.y.isFinite && $0.width.isFinite && $0.depth.isFinite && $0.height.isFinite }.prefix(64))
         for i in manualMounds.indices {

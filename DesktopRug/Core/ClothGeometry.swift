@@ -3,6 +3,22 @@ import simd
 
 public enum ClothGeometry {
     public static let liftProjection = SIMD2<Float>(0.16, 0.52)
+    public static func normalizedDegrees(_ degrees: Float) -> Float {
+        guard degrees.isFinite else { return 0 }
+        let angle = degrees.truncatingRemainder(dividingBy: 360)
+        if angle > 180 { return angle - 360 }
+        if angle < -180 { return angle + 360 }
+        return angle
+    }
+    public static func rotationMatrix(degrees: Float) -> simd_float2x2 {
+        let radians = degrees * (.pi / 180)
+        let c = cos(radians), s = sin(radians)
+        return simd_float2x2(columns: (SIMD2(c, s), SIMD2(-s, c)))
+    }
+    public static func rotatedHalfExtent(size: SIMD2<Float>, degrees: Float) -> SIMD2<Float> {
+        let matrix = rotationMatrix(degrees: degrees)
+        return simd_abs(matrix[0]) * (size.x / 2) + simd_abs(matrix[1]) * (size.y / 2)
+    }
     public static func project(_ point: SIMD3<Float>) -> SIMD2<Float> {
         SIMD2(point.x, point.y) + liftProjection * point.z
     }

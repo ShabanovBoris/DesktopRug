@@ -24,6 +24,7 @@ public final class ClothSimulation {
     public let rows: Int
     public let size: SIMD2<Float>
     public private(set) var origin: SIMD2<Float>
+    public private(set) var rotationDegrees: Float = 0
     public private(set) var positions: [SIMD3<Float>]
     public let uvs: [SIMD2<Float>]
     public let indices: [UInt32]
@@ -44,7 +45,7 @@ public final class ClothSimulation {
     private var accumulator: Float = 0
     private var selfCollision: ClothSelfCollision
 
-    public init(columns: Int, rows: Int, size: SIMD2<Float>, origin: SIMD2<Float>) {
+    public init(columns: Int, rows: Int, size: SIMD2<Float>, origin: SIMD2<Float>, rotationDegrees: Float = 0) {
         precondition(columns >= 3 && rows >= 3 && columns * rows < 65536)
         precondition(size.x > 0 && size.y > 0 && size.x.isFinite && size.y.isFinite)
         self.columns = columns; self.rows = rows; self.size = size; self.origin = origin
@@ -78,9 +79,19 @@ public final class ClothSimulation {
                 if y + 2 < rows { addConstraint(a, a + columns * 2, bending: true) }
             }
         }
+        setRotation(degrees: rotationDegrees)
     }
 
     public var cornerIndices: [Int] { [0, columns - 1, (rows - 1) * columns, rows * columns - 1] }
+    public var center: SIMD2<Float> { origin + size / 2 }
+    public var planarBounds: (lower: SIMD2<Float>, upper: SIMD2<Float>) {
+        var lower = SIMD2<Float>(repeating: .infinity), upper = SIMD2<Float>(repeating: -.infinity)
+        for p in positions {
+            let xy = SIMD2(p.x, p.y)
+            lower = simd_min(lower, xy); upper = simd_max(upper, xy)
+        }
+        return (lower, upper)
+    }
 
     private func addConstraint(_ a: Int, _ b: Int, bending: Bool) {
         constraints.append(DistanceConstraint(a: a, b: b, length: simd_distance(positions[a], positions[b]), isBending: bending))
@@ -103,6 +114,25 @@ public final class ClothSimulation {
         wake()
     }
 
+    public func setRotation(degrees: Float) {
+        guard degrees.isFinite else { return }
+        let next = ClothGeometry.normalizedDegrees(degrees)
+        guard next != rotationDegrees else { return }
+        let matrix = ClothGeometry.rotationMatrix(degrees: ClothGeometry.normalizedDegrees(next - rotationDegrees))
+        let pivot = center
+        func rotated(_ point: SIMD3<Float>) -> SIMD3<Float> {
+            let xy = pivot + matrix * (SIMD2(point.x, point.y) - pivot)
+            return SIMD3(xy.x, xy.y, point.z)
+        }
+        // Rotate Verlet history and grab targets with the mesh so the transform adds no artificial velocity.
+        for i in positions.indices {
+            positions[i] = rotated(positions[i]); previous[i] = rotated(previous[i])
+        }
+        pinTarget = rotated(pinTarget); pinPosition = rotated(pinPosition)
+        rotationDegrees = next
+        wake()
+    }
+
     public func grab(index: Int) {
         guard positions.indices.contains(index) else { return }
         grabbedIndex = index; pinTarget = positions[index]; pinPosition = pinTarget
@@ -111,7 +141,7 @@ public final class ClothSimulation {
 
     public func moveGrab(to target: SIMD3<Float>) {
         guard grabbedIndex != nil && target.x.isFinite && target.y.isFinite && target.z.isFinite else { return }
-        let center = origin + size / 2
+        let center = self.center
         let reach = simd_length(size) * 1.2
         pinTarget = SIMD3(min(max(target.x, center.x - reach), center.x + reach), min(max(target.y, center.y - reach), center.y + reach), min(max(target.z, 2), 350))
         quietSteps = 0; isSettled = false
@@ -218,8 +248,9 @@ public final class ClothSimulation {
     }
 
     public func reset() {
+        let matrix = ClothGeometry.rotationMatrix(degrees: rotationDegrees)
         for i in positions.indices {
-            let xy = origin + uvs[i] * size
+            let xy = center + matrix * ((uvs[i] - SIMD2(repeating: 0.5)) * size)
             let p = SIMD3(xy.x, xy.y, collisions.sample(at: xy).height + 1)
             positions[i] = p; previous[i] = p
         }

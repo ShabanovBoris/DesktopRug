@@ -1,5 +1,6 @@
 import AppKit
 import MetalKit
+import simd
 
 private final class DesktopRugPanel: NSPanel {
     override var canBecomeKey: Bool { false }
@@ -20,7 +21,7 @@ private final class DesktopRugPanel: NSPanel {
     init(configuration: RugConfiguration,screen: NSScreen,diagnostic: Bool = false) throws {
         self.screen=screen;self.diagnostic=diagnostic
         let origin=Self.validOrigin(configuration,screen:screen)
-        let simulation=ClothSimulation(columns:configuration.quality.columns,rows:configuration.quality.rows,size:SIMD2(configuration.width,configuration.height),origin:origin)
+        let simulation=ClothSimulation(columns:configuration.quality.columns,rows:configuration.quality.rows,size:SIMD2(configuration.width,configuration.height),origin:origin,rotationDegrees:configuration.rotationDegrees)
         Self.applyParameters(configuration,to:simulation)
         if diagnostic {
             let frame=NSRect(x:screen.frame.midX-460,y:screen.frame.midY-320,width:920,height:640)
@@ -68,9 +69,12 @@ private final class DesktopRugPanel: NSPanel {
 
     static func validOrigin(_ config: RugConfiguration,screen: NSScreen) -> SIMD2<Float> {
         let frame=screen.visibleFrame
-        let defaultX=Float(frame.midX)-config.width/2,defaultY=Float(frame.midY)-config.height/2
-        let x=config.originX ?? defaultX,y=config.originY ?? defaultY
-        return SIMD2(min(max(x,Float(frame.minX)+16),max(Float(frame.minX)+16,Float(frame.maxX)-config.width-16)),min(max(y,Float(frame.minY)+16),max(Float(frame.minY)+16,Float(frame.maxY)-config.height-16)))
+        let size=SIMD2(config.width,config.height)
+        let extent=ClothGeometry.rotatedHalfExtent(size:size,degrees:config.rotationDegrees)
+        let center=SIMD2((config.originX ?? (Float(frame.midX)-size.x/2))+size.x/2,(config.originY ?? (Float(frame.midY)-size.y/2))+size.y/2)
+        let lower=SIMD2(Float(frame.minX)+16,Float(frame.minY)+16)+extent
+        let upper=SIMD2(Float(frame.maxX)-16,Float(frame.maxY)-16)-extent
+        return simd_min(simd_max(center,lower),simd_max(lower,upper))-size/2
     }
 
     private static func applyParameters(_ config: RugConfiguration,to sim: ClothSimulation) {
@@ -83,9 +87,10 @@ private final class DesktopRugPanel: NSPanel {
             interaction.finishDrag()
             if let selected=Self.selectedScreen(next) { screen=selected }
             if !diagnostic { window.setFrame(screen.frame,display:true) }
-            let sim=ClothSimulation(columns:next.quality.columns,rows:next.quality.rows,size:SIMD2(next.width,next.height),origin:Self.validOrigin(next,screen:screen))
+            let sim=ClothSimulation(columns:next.quality.columns,rows:next.quality.rows,size:SIMD2(next.width,next.height),origin:Self.validOrigin(next,screen:screen),rotationDegrees:next.rotationDegrees)
             renderer.setSimulation(sim);interaction.simulation=sim
-        } else if old.originX != next.originX || old.originY != next.originY {
+        } else if old.originX != next.originX || old.originY != next.originY || old.rotationDegrees != next.rotationDegrees {
+            renderer.simulation.setRotation(degrees:next.rotationDegrees)
             let origin=Self.validOrigin(next,screen:screen)
             renderer.simulation.translate(by:origin-renderer.simulation.origin)
         }

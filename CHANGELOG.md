@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 — 2026-10-11
+
+- Rotate the cloth around its center with Command-drag, an angle slider, or the Rug Rotation menu.
+- Save the angle with the rug's position and preserve it through resize, quality changes, and Relax Fabric.
+- Select collision volumes using the rotated mesh bounds while desktop icons remain fixed.
+- Load earlier saved configurations with zero rotation and preserve their other settings.
+- Add five rotation/configuration regression tests and native rotation checks.
+
 ## 1.0.1 — 2026-10-11
 
 - English names for all rug patterns and English asset documentation.

@@ -21,6 +21,7 @@ import simd
     enum Drag {
         case corner(index: Int, startPointer: SIMD2<Float>, startHeight: Float)
         case rug(lastPointer: SIMD2<Float>)
+        case rotation(lastX: Float)
     }
     var simulation: ClothSimulation
     weak var view: RugMetalView?
@@ -28,9 +29,10 @@ import simd
     private(set) var drag: Drag?
     private(set) var mouseDownCount = 0
     private(set) var cornerDragCount = 0
+    private(set) var rotationDragCount = 0
     var wake: (() -> Void)?
-    var didMove: ((SIMD2<Float>) -> Void)?
-    var didTranslate: (() -> Void)?
+    var didFinishTransform: ((SIMD2<Float>, Float) -> Void)?
+    var didTransform: (() -> Void)?
     var addMound: ((SIMD2<Float>) -> Void)?
     var reveal: (() -> Void)?
     private var globalMonitor: Any?
@@ -79,6 +81,13 @@ import simd
         guard contains(pointer) else { return }
         mouseDownCount += 1
         if event.modifierFlags.contains(.shift) { addMound?(pointer);return }
+        if event.modifierFlags.contains(.command) {
+            drag = .rotation(lastX: pointer.x)
+            rotationDragCount += 1
+            NSCursor.closedHand.set()
+            wake?();updatePassthrough()
+            return
+        }
         var corner: Int?
         var best: Float=28
         for index in simulation.cornerIndices {
@@ -106,7 +115,11 @@ import simd
         case .rug(let last):
             simulation.translate(by:pointer-last)
             self.drag = .rug(lastPointer:pointer)
-            didTranslate?()
+            didTransform?()
+        case .rotation(let lastX):
+            simulation.setRotation(degrees: simulation.rotationDegrees - (pointer.x - lastX) * 0.4)
+            self.drag = .rotation(lastX: pointer.x)
+            didTransform?()
         }
         wake?()
     }
@@ -115,7 +128,7 @@ import simd
     func finishDrag() {
         guard drag != nil else { return }
         simulation.releaseGrab();drag=nil
-        didMove?(simulation.origin)
+        didFinishTransform?(simulation.origin, simulation.rotationDegrees)
         wake?();updatePassthrough();NSCursor.arrow.set()
     }
 }

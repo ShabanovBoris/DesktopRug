@@ -50,7 +50,7 @@ import ServiceManagement
             }.frame(maxHeight:.infinity)
             Divider()
             HStack {
-                Text("Drag to move · Lift a corner · Right-click to reveal").font(.system(size:10)).foregroundStyle(.secondary)
+                Text("Drag to move · ⌘-drag to rotate · Lift a corner · Right-click to reveal").font(.system(size:10)).foregroundStyle(.secondary)
                 Spacer()
                 Button(store.configuration.isVisible ? "Reveal Items" : "Show Rug") { app.toggleVisible() }
                     .buttonStyle(.borderedProminent).tint(accent)
@@ -82,15 +82,17 @@ import ServiceManagement
                     }.buttonStyle(.plain).accessibilityLabel(texture.title)
                 }
             }
-            GroupBox("Dimensions") {
+            GroupBox("Size & Rotation") {
                 VStack(spacing:14) {
                     slider("Width",value:binding(\.width),range:280...1400,format:"%.0f pt")
                     slider("Height",value:binding(\.height),range:200...950,format:"%.0f pt")
+                    slider("Rotation",value:Binding(get:{store.configuration.rotationDegrees},set:{app.setRotation($0)}),range:-180...180,format:"%.0f°")
                 }.padding(10)
             }
             HStack {
                 Toggle("Lock rug in place",isOn:binding(\.isLocked))
                 Spacer()
+                Button("Reset Rotation") { app.resetRotation() }
                 Button("Reset Position") { app.resetPosition() }
             }
         }

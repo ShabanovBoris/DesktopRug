@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-Run `bash scripts/test.sh`. The 14 XCTest cases cover mesh topology and UVs, mound contact and overlapping piles, folding and release, extreme movement, fixed steps and idle sleep, hit testing, Finder coordinate conversion, configuration round trips, vertex–triangle contact, fast crossings, edge–edge separation, and independent intersection checks in a deep fold.
+Run `bash scripts/test.sh`. The 19 XCTest cases cover mesh topology and UVs, mound contact and overlapping piles, folding and release, extreme movement, fixed steps and idle sleep, hit testing, Finder coordinate conversion, configuration round trips, vertex–triangle contact, fast crossings, edge–edge separation, and independent intersection checks in a deep fold. Rotation checks cover shape and grab preservation, velocity continuity, reset/rebuild orientation, stationary collisions, and decoding configurations saved before rotation support.
 
 GitHub Actions verifies deterministic project generation, runs the tests, builds the app, and packages it. CI does not prove graphical desktop behavior, Finder permission prompts, or GPU performance.
 
@@ -16,6 +16,8 @@ Build the app and close any running normal instance. In a graphical macOS sessio
 ```
 
 `--validate` uses isolated settings and deterministic test objects, saves real Metal frames, exercises folds/settling, and measures a short active render interval. `--deep-fold` adds a larger fold. `--validate-ui` captures all settings sections, checks show/reveal/lock and display selection, and verifies all four textures, saved selections, and flat/folded Metal rendering.
+
+`--validate-ui` also checks rotation menu actions, app-local Command-drag events, saved angles, locked input, size/quality changes, Relax Fabric, and collision selection outside the unrotated footprint. It saves rotated flat, folded, and collision renders. These input events are sent directly to the app's handlers; they do not prove global keyboard/mouse delivery. For a manual desktop check, hold Command and drag the rug horizontally, then restart it and confirm its angle is restored.
 
 For real input, `--interaction-check` opens a labeled diagnostic window with explicit test mounds. `--desktop-input-check` uses the real desktop panel, ordinary saved settings, and any connected Finder. It writes counters to `/private/tmp/desktop-rug-interaction.json`; omit these flags for normal use.
 
