@@ -1,0 +1,15 @@
+build/
+.build/
+.swiftpm/
+.DS_Store
+*.xcuserstate
+xcuserdata/
+*.dSYM/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+# Local diagnostics can contain desktop paths and machine-specific settings.
+Validation/
+VALIDATION.md
