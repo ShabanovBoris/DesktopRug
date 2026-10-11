@@ -17,8 +17,8 @@ public enum RugTexture: String, Codable, CaseIterable, Sendable {
         switch self {
         case .heriz: return "Heriz · Garnet"
         case .indigo: return "Isfahan · Indigo"
-        case .sovietRed: return "Советский · Красный"
-        case .sovietFloral: return "Советский · Цветочный"
+        case .sovietRed: return "Soviet · Red"
+        case .sovietFloral: return "Soviet · Floral"
         }
     }
 }

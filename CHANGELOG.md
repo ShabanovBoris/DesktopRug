@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 — 2026-10-11
+
+- English names for all rug patterns and English asset documentation.
+- A recorded desktop demonstration embedded in the README in place of screenshots.
+- English documentation at the previous Russian README path.
+
 ## 1.0.0 — 2026-10-11
 
 Initial open-source release.

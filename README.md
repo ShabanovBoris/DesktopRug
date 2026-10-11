@@ -2,16 +2,16 @@
 
 A native macOS desktop rug with interactive cloth physics, woven patterns, and Metal rendering. Lift a corner, fold the fabric, or let it drape over your Finder icons.
 
-[Русский](README.ru.md) · [Download](https://github.com/ShabanovBoris/DesktopRug/releases/latest) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
+[Download](https://github.com/ShabanovBoris/DesktopRug/releases/latest) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
 
-![A lifted cloth corner rendered by Desktop Rug](docs/images/cloth-corner.png)
+https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb
 
 ## Features
 
 - A transparent desktop panel above Finder icons and below ordinary application windows.
 - XPBD cloth simulation with stretching, shear, bending, gravity, friction, damping, and self-collision.
 - Metal rendering with material UVs, lighting, contact shadows, edge thickness, and geometric fringe.
-- Four rugs: Heriz, Isfahan, Soviet Red, and Soviet Floral.
+- Four rugs: Heriz · Garnet, Isfahan · Indigo, Soviet · Red, and Soviet · Floral.
 - Optional Finder integration and manually placed collision mounds.
 - Menu bar controls, adjustable size and physics quality, 30/60/120 FPS, and Start at Login.
 - Saved settings and position. Physics and drawing pause when the fabric settles.
@@ -29,7 +29,7 @@ Release binaries are **ad-hoc signed and not notarized**. macOS may block the fi
 Each release includes a `.sha256` file. In the download directory, verify the archive with:
 
 ```bash
-shasum -a 256 -c DesktopRug-v1.0.0-macOS-arm64.zip.sha256
+shasum -a 256 -c DesktopRug-v1.0.1-macOS-arm64.zip.sha256
 ```
 
 ## Controls
@@ -46,8 +46,6 @@ shasum -a 256 -c DesktopRug-v1.0.0-macOS-arm64.zip.sha256
 | Reset Rug Position | Center the rug on its selected display |
 
 Open **Settings → Appearance** to choose a pattern. **Cloth & Motion** controls material and performance; **Desktop** controls the display, Finder connection, manual objects, and login item.
-
-![Appearance settings with all four rug patterns](docs/images/appearance.png)
 
 ## Finder and privacy
 
@@ -137,4 +135,4 @@ To regenerate procedural graphics:
 swift Tools/GenerateRugAssets.swift DesktopRug/Resources
 ```
 
-This command preserves the two Soviet textures. Documentation images show only the app's own rendered cloth and settings.
+This command preserves the two Soviet textures. The demo video shows the app running on a real macOS desktop with five sample files.
