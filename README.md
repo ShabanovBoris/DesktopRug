@@ -1,21 +1,10 @@
 # Desktop Rug
 
-**Your Mac needs a rug.**
+A native macOS desktop rug with interactive cloth physics, woven patterns, and Metal rendering. Lift a corner, fold the fabric, or let it drape over your Finder icons.
 
-A free, native macOS desktop rug with interactive cloth physics, woven patterns, and Metal rendering. Lift a corner, fold the fabric, or let it drape over your Finder icons.
-
-[Download for Mac](https://github.com/ShabanovBoris/DesktopRug/releases/latest) · [Installation](#install) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
-
-[![Desktop Rug folding over sample Finder icons on a real macOS desktop](site/assets/demo.gif)](https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb)
-
-The released binary requires **macOS 14+ and Apple Silicon**. It is ad-hoc signed and not notarized; [first-launch instructions](#install) are below.
-
-<details>
-<summary>Watch the full desktop recording (49 seconds)</summary>
+[Download](https://github.com/ShabanovBoris/DesktopRug/releases/latest) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
 
 https://github.com/user-attachments/assets/1a1f23eb-104f-4441-aa71-702475a0e4bb
-
-</details>
 
 ## Features
 
